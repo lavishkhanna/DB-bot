@@ -1,6 +1,8 @@
 from app.database.connection import execute_query
 import logging
 import re
+from decimal import Decimal
+from datetime import datetime, date
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +58,24 @@ class DatabaseService:
         return True, "Valid"
     
     @staticmethod
+    def serialize_value(value):
+        """Convert non-JSON-serializable types to JSON-serializable ones"""
+        if isinstance(value, Decimal):
+            return float(value)
+        elif isinstance(value, (datetime, date)):
+            return value.isoformat()
+        elif isinstance(value, bytes):
+            return value.decode('utf-8', errors='ignore')
+        return value
+    
+    @staticmethod
+    def serialize_row(row):
+        """Serialize a database row to JSON-compatible dict"""
+        if isinstance(row, dict):
+            return {key: DatabaseService.serialize_value(value) for key, value in row.items()}
+        return row
+    
+    @staticmethod
     def execute_user_query(sql: str):
         """Execute user-provided SQL query with validation"""
         # Validate
@@ -65,10 +85,20 @@ class DatabaseService:
         
         try:
             results = execute_query(sql)
+            
+            # Serialize results to make them JSON-compatible
+            if results:
+                serialized_results = [
+                    DatabaseService.serialize_row(row) 
+                    for row in results
+                ]
+            else:
+                serialized_results = []
+            
             return {
                 "success": True,
-                "data": results,
-                "row_count": len(results) if results else 0
+                "data": serialized_results,
+                "row_count": len(serialized_results) if serialized_results else 0
             }
         except Exception as e:
             logger.error(f"Error executing query: {e}")
