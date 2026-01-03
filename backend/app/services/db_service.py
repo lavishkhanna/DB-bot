@@ -10,24 +10,66 @@ class DatabaseService:
     
     @staticmethod
     def get_schema():
-        """Get database schema information"""
+        """Get comprehensive database schema information including relationships"""
         sql = """
-            SELECT 
-                t.table_name,
-                array_agg(
-                    json_build_object(
-                        'column_name', c.column_name,
-                        'data_type', c.data_type,
-                        'is_nullable', c.is_nullable
-                    ) ORDER BY c.ordinal_position
-                ) as columns
-            FROM information_schema.tables t
-            JOIN information_schema.columns c 
-                ON t.table_name = c.table_name
-            WHERE t.table_schema = 'public'
-                AND t.table_type = 'BASE TABLE'
-            GROUP BY t.table_name
-            ORDER BY t.table_name
+            WITH table_info AS (
+                SELECT
+                    t.table_name,
+                    array_agg(
+                        json_build_object(
+                            'column_name', c.column_name,
+                            'data_type', c.data_type,
+                            'is_nullable', c.is_nullable,
+                            'is_primary_key', COALESCE(
+                                (SELECT true
+                                 FROM information_schema.table_constraints tc
+                                 JOIN information_schema.key_column_usage kcu
+                                   ON tc.constraint_name = kcu.constraint_name
+                                   AND tc.table_schema = kcu.table_schema
+                                 WHERE tc.constraint_type = 'PRIMARY KEY'
+                                   AND tc.table_schema = 'public'
+                                   AND tc.table_name = t.table_name
+                                   AND kcu.column_name = c.column_name
+                                 LIMIT 1
+                                ), false
+                            )
+                        ) ORDER BY c.ordinal_position
+                    ) as columns
+                FROM information_schema.tables t
+                JOIN information_schema.columns c
+                    ON t.table_name = c.table_name
+                WHERE t.table_schema = 'public'
+                    AND t.table_type = 'BASE TABLE'
+                GROUP BY t.table_name
+            ),
+            foreign_keys AS (
+                SELECT
+                    tc.table_name,
+                    array_agg(
+                        json_build_object(
+                            'column_name', kcu.column_name,
+                            'foreign_table', ccu.table_name,
+                            'foreign_column', ccu.column_name
+                        )
+                    ) as foreign_keys
+                FROM information_schema.table_constraints tc
+                JOIN information_schema.key_column_usage kcu
+                    ON tc.constraint_name = kcu.constraint_name
+                    AND tc.table_schema = kcu.table_schema
+                JOIN information_schema.constraint_column_usage ccu
+                    ON ccu.constraint_name = tc.constraint_name
+                    AND ccu.table_schema = tc.table_schema
+                WHERE tc.constraint_type = 'FOREIGN KEY'
+                    AND tc.table_schema = 'public'
+                GROUP BY tc.table_name
+            )
+            SELECT
+                ti.table_name,
+                ti.columns,
+                COALESCE(fk.foreign_keys, ARRAY[]::json[]) as foreign_keys
+            FROM table_info ti
+            LEFT JOIN foreign_keys fk ON ti.table_name = fk.table_name
+            ORDER BY ti.table_name
         """
         try:
             results = execute_query(sql)
@@ -74,6 +116,23 @@ class DatabaseService:
         if isinstance(row, dict):
             return {key: DatabaseService.serialize_value(value) for key, value in row.items()}
         return row
+
+    @staticmethod
+    def get_sample_data(table_name: str, limit: int = 3):
+        """Get sample data from a table to help LLM understand data structure"""
+        sql = f"SELECT * FROM {table_name} LIMIT {limit}"
+        try:
+            is_valid, message = DatabaseService.validate_sql(sql)
+            if not is_valid:
+                raise ValueError(message)
+
+            results = execute_query(sql)
+            if results:
+                return [DatabaseService.serialize_row(row) for row in results]
+            return []
+        except Exception as e:
+            logger.error(f"Error getting sample data from {table_name}: {e}")
+            return []
     
     @staticmethod
     def execute_user_query(sql: str):

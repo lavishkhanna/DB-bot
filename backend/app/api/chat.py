@@ -15,17 +15,9 @@ async def chat(request: ChatRequest):
     Send a message to the chatbot
     """
     try:
-        # Convert conversation history to dict format
-        history = None
-        if request.conversation_history:
-            history = [msg.model_dump() for msg in request.conversation_history]
-        
-        # Process message
-        result = chat_service.process_message(
-            user_message=request.message,
-            conversation_history=history
-        )
-        
+        # Process message (no history - keep it simple)
+        result = chat_service.process_message(user_message=request.message)
+
         return ChatResponse(**result)
         
     except Exception as e:
