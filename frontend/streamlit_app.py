@@ -161,36 +161,37 @@ if st.session_state.get("show_schema", False):
         st.rerun()
 
 # Display chat messages
-for message in st.session_state.messages:
+for idx, message in enumerate(st.session_state.messages):
     role = message["role"]
     content = message["content"]
-    
+
     if role == "user":
         with st.chat_message("user", avatar="👤"):
             st.markdown(content)
     else:
         with st.chat_message("assistant", avatar="🤖"):
             st.markdown(content)
-            
+
             # Show SQL query if available
             if "sql" in message:
                 with st.expander("🔍 View SQL Query"):
                     st.code(message["sql"], language="sql")
-            
+
             # Show data table if available
             if "data" in message and message["data"]:
                 df = format_table_data(message["data"])
-                
+
                 if not df.empty:
                     st.dataframe(df, use_container_width=True)
-                    
+
                     # Download button
                     csv = export_to_csv(df)
                     st.download_button(
                         label="📥 Download CSV",
                         data=csv,
                         file_name=f"query_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                        mime="text/csv"
+                        mime="text/csv",
+                        key=f"download_csv_msg_{idx}"
                     )
 
 # Handle selected sample question
@@ -254,14 +255,15 @@ if user_input:
                         st.info(f"Showing {len(data)} of {row_count} results")
                     
                     st.dataframe(df, use_container_width=True)
-                    
+
                     # Download button
                     csv = export_to_csv(df)
                     st.download_button(
                         label="📥 Download CSV",
                         data=csv,
                         file_name=f"query_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                        mime="text/csv"
+                        mime="text/csv",
+                        key="download_csv_current"
                     )
             
             # Show error if any
