@@ -21,13 +21,9 @@ def get_sample_questions() -> List[str]:
     """Return sample questions users can ask"""
     return [
         "How many users are in the database?",
-        "Show me all courses",
-        "List users created this month",
-        "What are the top 5 most popular courses by enrollment?",
-        "Show me all instructors",
-        "Count total enrollments",
-        "Show courses with their instructor names",
-        "List users who completed at least one course"
+        "Show me customers and their total number of rentals",
+        "What's the revenue breakdown by film category?",
+        "What's the average rental duration"
     ]
 
 def export_to_csv(df: pd.DataFrame, filename: str = "query_results.csv"):
