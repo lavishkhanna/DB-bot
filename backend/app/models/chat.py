@@ -15,4 +15,5 @@ class ChatResponse(BaseModel):
     sql_explanation: Optional[str] = Field(None, description="Explanation of the SQL query")
     row_count: Optional[int] = Field(None, description="Number of rows returned")
     data_preview: Optional[List[Any]] = Field(None, description="Preview of returned data")
+    total_data: Optional[List[Any]] = Field(None, description="All returned data")
     error: Optional[str] = Field(None, description="Error message if any")

@@ -7,15 +7,14 @@ from app.config import get_settings
 from app.database.connection import init_db_pool, close_db_pool
 from app.api import chat
 from app.api.health import router as health_router
+from app.utils.logger import setup_logging
 
-# Setup logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
-
+# Get settings first
 settings = get_settings()
+
+# Setup logging with configured level
+setup_logging(settings.LOG_LEVEL)
+logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

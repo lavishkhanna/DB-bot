@@ -243,7 +243,8 @@ if user_input:
             
             # Show data table if available
             if "data_preview" in response and response["data_preview"]:
-                data = response["data_preview"]
+                # data = response["data_preview"]
+                data = response["total_data"]
                 message_data["data"] = data
                 
                 df = format_table_data(data)
@@ -258,6 +259,7 @@ if user_input:
 
                     # Download button
                     csv = export_to_csv(df)
+                    # csv_full=export_to_csv(format_table_data(data_2))
                     st.download_button(
                         label="📥 Download CSV",
                         data=csv,

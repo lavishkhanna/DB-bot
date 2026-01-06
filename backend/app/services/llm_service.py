@@ -165,3 +165,7 @@ Remember: Accuracy is critical. Always verify names against the schema above!"""
         sql = text.strip().rstrip('.;')
         
         return sql
+    
+    def natural_resp(response: str) -> str:
+        """Generate a natural language response from SQL result"""
+        return f"The query result is as follows:\n{response}"

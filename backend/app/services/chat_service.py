@@ -33,6 +33,7 @@ class ChatService:
             for attempt in range(max_retries):
                 response = self.llm_service.chat(messages, self.schema)
                 sql_text = response.choices[0].message.content
+                logger.info(f"LLM response (attempt {attempt + 1}): {sql_text}")
 
                 # Extract SQL
                 sql = self.llm_service.extract_sql(sql_text)
@@ -45,6 +46,7 @@ class ChatService:
                 # Build response
                 if query_result["success"]:
                     data_preview = query_result["data"][:5] if query_result["data"] else []
+                    total_data= query_result["data"] if query_result["data"] else []
 
                     # Create a natural language response
                     if query_result["row_count"] == 0:
@@ -58,7 +60,8 @@ class ChatService:
                         "response": response_text,
                         "sql_executed": sql,
                         "row_count": query_result["row_count"],
-                        "data_preview": data_preview
+                        "data_preview": data_preview,
+                        "total_data": total_data
                     }
                 else:
                     # Query failed - provide error feedback to LLM for retry

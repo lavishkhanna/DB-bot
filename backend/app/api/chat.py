@@ -17,7 +17,8 @@ async def chat(request: ChatRequest):
     try:
         # Process message (no history - keep it simple)
         result = chat_service.process_message(user_message=request.message)
-
+        logger.info(f"Chat response: {result}")
+        
         return ChatResponse(**result)
         
     except Exception as e:

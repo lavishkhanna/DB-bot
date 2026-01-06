@@ -23,7 +23,9 @@ def get_sample_questions() -> List[str]:
         "How many users are in the database?",
         "Show me customers and their total number of rentals",
         "What's the revenue breakdown by film category?",
-        "What's the average rental duration"
+        "What's the average rental duration",
+        "which is the most profitable time of the year for us?",
+        "which is the most profitable film we have?"
     ]
 
 def export_to_csv(df: pd.DataFrame, filename: str = "query_results.csv"):

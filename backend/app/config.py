@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "DB Chatbot API"
     DEBUG: bool = False
     API_VERSION: str = "v1"
+    LOG_LEVEL: str = "INFO"
     
     # Database
     DATABASE_URL: str
